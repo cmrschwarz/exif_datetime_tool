@@ -9,18 +9,26 @@ import glob
 from typing import Optional
 
 
-
 EXIF_TAG_STRINGS = {v: k for (k, v) in ExifTags.TAGS.items()}
+date_time_source_tags = [
+    EXIF_TAG_STRINGS["DateTime"],
+    EXIF_TAG_STRINGS["DateTimeOriginal"],
+    EXIF_TAG_STRINGS["DateTimeDigitized"],
+]
+# we set the gathered information on all three of these,
+# because different tools use different things ...
+date_time_target_tags = date_time_source_tags
 
-date_time_tag = EXIF_TAG_STRINGS["DateTime"]
+
+dir = os.path.realpath(os.path.dirname(__file__))
+input_path = os.path.join(dir, "input")
+output_path = os.path.join(dir, "output")
+
 
 date_time_regex_wa = re.compile("IMG-([0-9]{8})-WA")
 date_time_regex_plain = re.compile("([0-9]{8})[-_]([0-9]{6})")
 date_time_format = "%Y:%m:%d %H:%M:%S"
 
-dir = os.path.realpath(os.path.dirname(__file__))
-input_path = os.path.join(dir, "input")
-output_path = os.path.join(dir, "output")
 
 def try_get_datetime_from_filename(img) -> Optional[str]:
     basename = os.path.basename(img)
@@ -45,17 +53,21 @@ for img in glob.glob(input_path + "/**.jp*"):
         continue
     try:
         img_exif = img_pil.getexif()
-        dt = img_exif.get(date_time_tag, None)
-        print(f"{img}: {str(list(img_exif.items()))}")
+        for dtst in date_time_source_tags:
+            dt = img_exif.get(dtst, None)
+            if dt is not None:
+                break
         if dt is None:
             dt = try_get_datetime_from_filename(img)
             if dt is None:
                 print(f"{img}: failed to parse datetime from filename")
-            else:
-                img_exif[date_time_tag] = dt
-                print(f"{img}: set date time to {dt}")
+                continue
+            print(f"{img}: interpreting filename date time as {dt}")
         else:
             print(f"{img}: keeping existing time value {dt}")
+        for dttt in date_time_target_tags:
+            if dttt not in img_exif:
+                img_exif[dttt] = dt
         img_pil.save(
             os.path.join(output_path, os.path.basename(img)),
             exif=img_exif
