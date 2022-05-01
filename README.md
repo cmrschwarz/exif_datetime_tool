@@ -5,5 +5,7 @@ Add missing EXIF DateTime information to images based on their filenames.
 - `pip install pyexiv2`
 
 ## Usage
-- place (a copy of) the images you want to process in a directory (`directory_path`)
-- calling `./exif_datetime_tool.py directory_path` will update the exif data of the images (in place!)
+- Call `./exif_datetime_tool.py <directory_path>`
+- This will in-place update the EXIF data of all images in `<directory_path>`,
+  and it's subdirectories.
+- Non Image files and files with existing DateTimes remain unchanged.

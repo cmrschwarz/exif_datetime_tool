@@ -92,5 +92,4 @@ def handle_dir(dir_rel):
 
 
 if __name__ == "__main__":
-
     handle_dir(sys.argv[1])
